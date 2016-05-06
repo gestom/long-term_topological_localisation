@@ -60,7 +60,7 @@ builds the maps, removes unstable features and creates FreMEN visibility models 
 
 #### Benchmark localisation 
 
-To run the benchmarks, run the <b>fremen</b> with the <i>test</i> argument. The other arguments are <i>image folder</i>, <i>map_folder</i>, <i>num_features</i> <i>fremen_order</i> , , e.g.:
+To run the benchmarks, run the <b>fremen</b> with the <i>test</i> argument. The other arguments are <i>image folder</i>, <i>map_folder</i>, <i>num_features</i>, and <i>fremen_order</i>  e.g.:
 
 ``../bin/fremen test stromovka/testing/ stromovka/maps/ 15 1``
 
