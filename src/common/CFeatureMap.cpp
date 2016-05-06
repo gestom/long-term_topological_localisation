@@ -367,9 +367,10 @@ void CFeatureMap::save(const char* name)
 	storage.release();
 }
 
-void CFeatureMap::load(const char* name)
+bool CFeatureMap::load(const char* name)
 {
 	cv::FileStorage storage(name, cv::FileStorage::READ);
+	if (storage.isOpened() == false) return -1;
 	globalPositions.clear();
 	cv::Mat gP,fremen;
 	storage["Keypoints"] >> gP;
@@ -403,6 +404,7 @@ void CFeatureMap::load(const char* name)
 	}
 	storage.release(); 
 	totalPics = visibility.cols;
+	return 0;
 }
 
 void CFeatureMap::binaryDescriptor(unsigned char *dst,unsigned char* in,int length)

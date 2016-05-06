@@ -28,7 +28,7 @@ class CFeatureMap
 
 		void save(const char* name);
 		void loadReadable(const char* name);
-		void load(const char* name);
+		bool load(const char* name);
 		void saveReadable(const char* name);
 		int extract(Mat img,int number);
 		int drawPredicted(Mat img);

@@ -19,6 +19,8 @@ int dummy =0;
 Mat imgColor;
 Mat imgGray;
 
+int timeQuantum = 7200; 		//for stromovka dataset: pretend that one year equals to one day, i.e. one month is 2 hours
+//int timeQuantum = 600; 			//for Witham dataset: images were taken every 10 minutes 
 int featuresToExtract = 500;
 float confVec[8];
 
@@ -41,54 +43,40 @@ void listFiles(const char* name)
 	}	
 	qsort(times,numFiles,sizeof(int),compare);
 	closedir(dir);
-	//for (int i = 0;i<numFiles;i++) printf("%05i.bmp\n",times[i]);
 }
 
 int main(int argc,char *argv[])
 {
-	/*Mat imgMap;
-	CFeatureMap map;
-	int numMaps = 8;
-	sprintf(filename,"%s/place_%i.map",argv[3],atoi(argv[2]));
-	map.load(filename);
-	for (int j=0;j<map.visibility.cols;j++){
-		for (int o=0;o<10;o++){
-			{
-				for (int k=0;k<map.visibility.rows;k++) printf("%i ",map.visibility.at<char>(k,j));
-			}
-			printf("\n");	
-		}
-	}
-	return 0;*/
-
-
-	//map.load("place.map");
+	/*incrementally build a feature-based model*/
 	if (strcmp(argv[1],"build")==0)
 	{
 		listFiles(argv[2]);
 		CFeatureMap map(numFiles);
-		printf("NumFiles: %i\n",numFiles);
+		//printf("NumFiles: %i\n",numFiles);
 		for (int i=0;i<numFiles;i++)
 		{
 			sprintf(filename,"%s/%05i.bmp",argv[2],times[i]);
 			imgColor = imread(filename, CV_LOAD_IMAGE_COLOR);
 			imgGray  = imread(filename, CV_LOAD_IMAGE_GRAYSCALE);
 			map.extract(imgGray,featuresToExtract);
-			map.addToMap(i*7200,0.7,true);
+			map.addToMap(i*timeQuantum,0.7,true);
 			if (draw) map.drawAllFeatures(imgColor);
 		}
 		map.save(argv[3]);
 		//sprintf(filename,"%s.readable",argv[3]);
 		//map.saveReadable(filename);
 	}
-	//make readable
+
+	/*generate easy-to-read text files of the individual locations*/
 	if (strcmp(argv[1],"readable")==0)
 	{
 		CFeatureMap map(numFiles);
 		map.load(argv[2]);
 		map.saveReadable(argv[3]);
 	}
-	//reduce input_map threshold output_map 
+
+	/*throw away unstable features
+	reduce input_map threshold output_map */
 	if (strcmp(argv[1],"reduce")==0)
 	{
 		CFeatureMap map(numFiles);
@@ -97,7 +85,8 @@ int main(int argc,char *argv[])
 		map.save(argv[4]);
 	}
 
-	//recalculate image_dir input_map output_map 
+	/*recalculate the temporal models of feature visibility
+	recalculate image_dir input_map output_map*/
 	if (strcmp(argv[1],"recalculate")==0)
 	{
 		listFiles(argv[2]);
@@ -109,7 +98,7 @@ int main(int argc,char *argv[])
 			imgColor = imread(filename, CV_LOAD_IMAGE_COLOR);
 			imgGray  = imread(filename, CV_LOAD_IMAGE_GRAYSCALE);
 			map.extract(imgGray,featuresToExtract);
-			map.reidentify(i*7200,0.7,false);
+			map.reidentify(i*timeQuantum,0.7,false);
 			//map.drawReidentified(imgColor,imgColor);
 		}
 		map.fremenize(MAX_ADAPTIVE_ORDER+1);
@@ -137,17 +126,20 @@ int main(int argc,char *argv[])
 			map.drawCurrentMatches(imgColor,imgColor);
 		}
 	}
+	/*perform the actual tests*/
 	if (strcmp(argv[1],"test")==0)
 	{
 		Mat imgMap;
-		listFiles(argv[2]);
+		char imageDir[1000];
+		sprintf(imageDir,"%s/place_0",argv[2]);
+		listFiles(imageDir);
 		CFeatureMap maps[8];
 		CFeatureMap imageMap;
-		int numMaps = 5;
-		for (int i=0;i<numMaps;i++)
+		int numMaps = 0;
+		for (int i=0;i<8;i++)
 		{
 			sprintf(filename,"%s/place_%i.map",argv[3],i);
-			maps[i].load(filename);
+			if (maps[i].load(filename)==0) numMaps++;
 		}
 		bool debug = true;
 		float matching[8];
@@ -155,42 +147,46 @@ int main(int argc,char *argv[])
 		float extracted;
 		float success,unknown,failures,globalSuccess,globalUnknown,globalFailures;
 		globalSuccess = globalUnknown = globalFailures = 0;
-		numFiles = 3; 
+		//TODOnumFiles = 3; 
 		int step = 1;
 		float sumPredicted = 0;
 		float sumMatched = 0;
 		float sumCorrect = 0;
 		float sumExtracted = 0;
 		int matches = 0;
-		//number of places*/
+
+		/*for all locations*/
 		for (int im=0;im<numMaps;im++)
 		{
 			//int im = indi[imt];
 			memset(confVec,0,8*sizeof(float));	
-			failures=success=unknown=0; 
+			failures=success=unknown=0;
+
+			/*for all images of the particular location*/
 			for (int i=0;i<numFiles;i+=step)
-			{
-				int indi[4] = {1,5,8};
-				int image = indi[i];
+			{ 
+				/*predict the appearance of known locations for the time the image was taken*/
 				for (int j=0;j<numMaps;j++)
 				{
 					if (debug) printf("Image: %i %04i : ",im,j);
 					if (atof(argv[4]) > 1){
-						predicted[j] = maps[j].predictNumber(image*7200,atoi(argv[4]),atoi(argv[5]));
-						//featuresToExtract = atoi(argv[4]); 
+						predicted[j] = maps[j].predictNumber(times[i]*timeQuantum,atoi(argv[4]),atoi(argv[5]));
 					}else{
-						predicted[j] = maps[j].predictThreshold(image*7200,atof(argv[4]),atoi(argv[5]));
-						//featuresToExtract = predicted[j]; 
+						predicted[j] = maps[j].predictThreshold(times[i]*timeQuantum,atof(argv[4]),atoi(argv[5]));
 					}
 					if (debug) printf("%02.0f ",matching[j]);
 				}
-				sprintf(filename,"%s/place_%i/%05i.bmp",argv[2],im,image);
+
+				/*extract features from testing images*/
+				sprintf(filename,"%s/place_%i/%05i.bmp",argv[2],im,times[i]);
 				imgGray  = imread(filename, CV_LOAD_IMAGE_GRAYSCALE);
 				imgColor  = imread(filename, CV_LOAD_IMAGE_COLOR);
 				extracted = imageMap.extract(imgGray,featuresToExtract);
-				//if (extracted == 0) printf("Extracted 0 features for place %i and image %i.\n",im,i); 
+				if (extracted == 0) printf("Extracted 0 features for place %i and image %i (%s).\n",im,i,filename); 
+
+				/*match the extracted features to the predicted ones*/
 				for (int j=0;j<numMaps;j++){
-					matching[j] = maps[j].match(&imageMap,strcmp(argv[6],"geometry")==0,&matches);
+					matching[j] = maps[j].match(&imageMap,true,&matches);
 					
 					if (j == im){
 						sumExtracted += extracted;
@@ -198,24 +194,26 @@ int main(int argc,char *argv[])
 						sumMatched += matches;
 						sumCorrect += matching[j];
 					}
-					matching[j] = matching[j];//;/(predicted[j]+1);
-					//if (j == im) sumCorrect += matching[j]; else sumMatched += matching[j];
-			
+
+					/*if no features are seen, then assume that the matching map is the one with least features visible*/
 					if (extracted == 0){
 						if (atof(argv[4]) > 1){
-							matching[j] = 1-predicted[j]/maps[j].predictNumber(image*7200,1000,0)/10.0;
+							matching[j] = 1-predicted[j]/maps[j].predictNumber(times[i]*timeQuantum,1000,0)/10.0;
 						}else{
-							matching[j] = 1-predicted[j]/maps[j].predictThreshold(image*7200,0.0,0)/10.0;
+							matching[j] = 1-predicted[j]/maps[j].predictThreshold(times[i]*timeQuantum,0.0,0)/10.0;
 						}
+						printf("Predicted %i %i %.0f %.3f\n",i,j,predicted[j],matching[j]); 
 					}
-					//if (extracted == 0) printf("Predicted %i %i %.0f %.3f\n",i,j,predicted[j],matching[j]); 
+					/*draw the results*/
 					if (draw)
 					{
-						sprintf(filename,"training/place_%i/%05i.bmp",j,i);
+						sprintf(filename,"%s/place_%i/%05i.bmp",argv[2],j,i);
 						imgMap = imread(filename, CV_LOAD_IMAGE_COLOR);
 						maps[j].drawCurrentMatches(imgColor,imgMap);
 					}
 				}
+
+				/*determine the map with most matches*/
 				float maxMatch = 0;
 				int index = -1;
 				for (int k = 0;k<numMaps;k++){
@@ -226,6 +224,7 @@ int main(int argc,char *argv[])
 					}
 				} 
 				if (debug) printf(": %i\n",index);
+				/*was the match correct ?*/
 				if (index == im){
 					success++;
 					confVec[index]++;
@@ -235,20 +234,22 @@ int main(int argc,char *argv[])
 					failures++;
 					confVec[index]++;
 				}
+				/*if not, display faulty matches*/	
 				if (index != im && false){
 					for (int j=0;j<numMaps;j++)
 					{
 						maps[j].debug = true;
-						predicted[j] = maps[j].predictThreshold(i*7200,atof(argv[4]),atoi(argv[5]));
+						predicted[j] = maps[j].predictThreshold(i*timeQuantum,atof(argv[4]),atoi(argv[5]));
 						maps[j].debug = false;
-						matching[j] = maps[j].match(&imageMap,strcmp(argv[6],"geometry")==0,&dummy);
-						sprintf(filename,"testing_Nov/place_%i/%05i.bmp",j,i);
+						matching[j] = maps[j].match(&imageMap,true,&dummy);
+						sprintf(filename,"%s/place_%i/%05i.bmp",argv[2],j,i);
 						imgMap = imread(filename, CV_LOAD_IMAGE_COLOR);
 						printf("Testing: %i Training: %i Sequence: %i\n",im,j,i);
 						maps[j].drawCurrentMatches(imgColor,imgMap);
 					}
 				}
 			}
+			/*print matching results of a given locations*/
 			globalSuccess += success;
 			globalUnknown += unknown;
 			globalFailures += failures;
@@ -256,6 +257,7 @@ int main(int argc,char *argv[])
 			for (int i=0;i<8;i++) printf("%.3f ",confVec[i]/numFiles*step);
 			printf("\n");
 		}
+		/*print ROC and average localisation error*/
 		printf("ROC: %f %f %.0f %.0f %.0f %.0f\n",sumCorrect/sumMatched,(sumMatched-sumCorrect)/(sumPredicted-sumCorrect),sumCorrect,sumMatched,sumPredicted,sumExtracted);
 		printf("Overall: %f %f %f %i\n",globalSuccess/numFiles/numMaps*step,globalUnknown/numFiles/numMaps*step,globalFailures/numFiles/numMaps*step,numFiles);
 		printf("Debug: %.0lf %i %i\n",globalSuccess,numFiles,numMaps);
