@@ -43,6 +43,7 @@ For quick testing, download the [Stromovka-FreLoc](https://drive.google.com/open
 The project requires <i>openCV</i>, and it was tested with openCV version 2.4.8.
 The project compilation is Makefile-based, so simply `cd src` to the <i>src</i> folder and call `make`.
 If successful, the <b>bin</b> folder should contain the <b>fremen</b> binary.
+To adjust to the partular dataset, change the <i>timeQuantum</i> variable in <b>main/fremen.cpp</b>.
 
 #### Build the spatio-temporal models 
 
@@ -60,7 +61,7 @@ builds the maps, removes unstable features and creates FreMEN visibility models 
 
 #### Benchmark localisation 
 
-To run the benchmarks, run the <b>fremen</b> with the <i>test</i> argument. The other arguments are <i>image folder</i>, <i>map_folder</i>, <i>num_features</i> <i>fremen_order</i> , , e.g.:
+To run the benchmarks, run the <b>fremen</b> with the <i>test</i> argument. The other arguments are <i>image folder</i>, <i>map_folder</i>, <i>num_features</i>, and <i>fremen_order</i>  e.g.:
 
 ``../bin/fremen test stromovka/testing/ stromovka/maps/ 15 1``
 
