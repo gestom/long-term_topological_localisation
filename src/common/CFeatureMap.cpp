@@ -300,7 +300,6 @@ void CFeatureMap::print()
 }
 
 
-//only for BRIEF
 void CFeatureMap::saveReadable(const char* name)
 {
 	FILE* file = fopen(name,"w+");
@@ -333,6 +332,28 @@ void CFeatureMap::saveReadable(const char* name)
 	fclose(file);	
 }
 
+void CFeatureMap::savePredictions(const char* baseName,int timeQuantum)
+{
+	char name[1000];
+	sprintf(name,"%s.vis",baseName);
+	FILE* file = fopen(name,"w+");
+	for (int t=0;t<visibility.cols;t++){
+		for (int f=0;f<visibility.rows;f++) fprintf(file,"%i ",visibility.at<char>(f,t));
+		fprintf(file,"\n");
+	}
+	fclose(file);
+	
+	for (int o=0;o<7;o++)
+	{
+		sprintf(name,"%s.fremen_%i",baseName,o);
+		file = fopen(name,"w+");
+		for (int t=0;t<visibility.cols;t++){
+			for (int f=0;f<visibility.rows;f++) fprintf(file,"%.3f ",frelementArray[f]->estimate(t*timeQuantum,o));
+			fprintf(file,"\n");
+		}	
+		fclose(file);
+	} 	
+}
 void CFeatureMap::save(const char* name)
 {
 	cv::FileStorage storage(name, cv::FileStorage::WRITE);

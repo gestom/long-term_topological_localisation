@@ -30,6 +30,7 @@ class CFeatureMap
 		void loadReadable(const char* name);
 		bool load(const char* name);
 		void saveReadable(const char* name);
+		void savePredictions(const char* baseName,int timeQuantum);
 		int extract(Mat img,int number);
 		int drawPredicted(Mat img);
 		int drawCurrentMatches(Mat img1,Mat img2);

@@ -75,6 +75,15 @@ int main(int argc,char *argv[])
 		map.saveReadable(argv[3]);
 	}
 
+	/*generate predictive models*/
+	if (strcmp(argv[1],"predict")==0)
+	{
+		CFeatureMap map(numFiles);
+		map.load(argv[2]);
+		map.savePredictions(argv[3],timeQuantum);
+	}
+
+
 	/*throw away unstable features
 	reduce input_map threshold output_map */
 	if (strcmp(argv[1],"reduce")==0)
