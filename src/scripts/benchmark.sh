@@ -43,10 +43,14 @@ IMAGES=$d/testing
 REPORTS=$d/reports
 SUMMARY=$d/summary
 
+
+cd scripts;make;cd ..
+
+if [ ! -e $MAPS ]; then mkdir $MAPS;fi
 if [ ! -e $REPORTS ]; then mkdir $REPORTS;fi
 if [ ! -e $SUMMARY ]; then mkdir $SUMMARY;fi
 
-cd scripts;make;cd ..
+./scripts/buildmaps.sh stromovka
 
 for numFeatures in $(seq -w 1 1 50); 
 do
