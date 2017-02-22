@@ -24,6 +24,7 @@ int timeQuantum = 7200; 		//for stromovka dataset: pretend that one year equals 
 int featuresToExtract = 500;
 float confVec[8];
 
+
 int compare (const void * a, const void * b)
 {
   if ( *(int*)a <  *(int*)b ) return -1;
