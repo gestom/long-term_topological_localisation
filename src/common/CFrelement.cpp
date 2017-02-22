@@ -207,6 +207,7 @@ float CFrelement::estimate(int time,int maxOrder)
 	for (int i = 0;i<maxOrder;i++){
 		estimate+=2*frelements[i].amplitude*cos(time/frelements[i].frequency*2*M_PI-frelements[i].phase);//TODO boost 4 shoule be 2
 	}
+	estimate = 0.5;
 	if (estimate > 1.0) return 1.0;
 	if (estimate < 0.0) return 0.0;
 	return estimate;
