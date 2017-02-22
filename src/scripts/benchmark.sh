@@ -20,10 +20,10 @@ function create_graph
 	echo { 
 	echo node [penwidth="2" fontname=\"palatino bold\"]; 
 	echo edge [penwidth="2"];	
-	for m in $(cut -f 1 -d ' ' benchmarks/models.tmp)
+	for m in $(cut -f 1 -d ' ' scripts/models.tmp)
 	do	
 		e=0
-		for n in $(cut -f 1 -d ' ' benchmarks/models.tmp)
+		for n in $(cut -f 1 -d ' ' scripts/models.tmp)
 		do
 			#echo -ne Comparing $m and $n' ';
 			if [ $(paste benchmarks/$d/$m.txt benchmarks/$d/$n.txt|tr \\t ' '|cut -f 4,9 -d ' '|./scripts/t-test|grep -c higher) == 1 ]
@@ -60,6 +60,7 @@ done
 
 rm -f $SUMMARY/report.pdf
 rm -f $SUMMARY/total.txt
+rm benchmarks/*
 
 grep Overall $REPORTS/*-new.txt|sed s/.*reports.//|sed s/\-.*\://  |sed s/^5\ .*// >benchmarks/$d/New_method.txt;
 
@@ -68,7 +69,7 @@ convert -density 200 benchmarks/$d.pdf -trim -bordercolor white benchmarks/$d.pn
 extend_figure benchmarks/$d.png
 cat best.txt |cut -f 2,4 -d ' '|tr ' ' _|sed s/$/.txt/|sed s/^/..\\/results\\//
 cp scripts/draw_summary_skelet.gnu benchmarks/draw_summary.gnu
-for i in $(cut -f 1 -d ' ' benchmarks/models.tmp);
+for i in $(cut -f 1 -d ' ' scripts/models.tmp);
 do 
 	echo \'benchmarks/$d/$i.txt\' 'using 1:(100-$2*100) lw 2 with line title' \'$i\',\\ >>benchmarks/draw_summary.gnu;
 done
