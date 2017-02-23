@@ -54,8 +54,8 @@ if [ ! -e $SUMMARY ]; then mkdir $SUMMARY;fi
 
 for numFeatures in $(seq -w 1 1 50); 
 do
-echo $EXE test $IMAGES $MAPS $numFeatures 0 
-$EXE test $IMAGES $MAPS $numFeatures 0 >$REPORTS/$numFeatures-new.txt 2>/dev/null
+echo $EXE test $IMAGES $MAPS $numFeatures 1 
+$EXE test $IMAGES $MAPS $numFeatures 1 >$REPORTS/$numFeatures-new.txt 2>/dev/null
 done
 
 rm -f $SUMMARY/report.pdf
