@@ -166,8 +166,8 @@ int CFeatureMap::extract(Mat img,int number)
 	//SIFT detector(200,3,0,10,1.6);
         // SIFT detector(200,3,0,10,1.6);
         // SIFT detector(200,3,0,10,1.6);
-         FastFeatureDetector detector(200,3,0,10,1.6);
-        BriefDescriptorExtractor extractor(200,3,0,10,1.6);
+        FastFeatureDetector detector;
+        BriefDescriptorExtractor extractor;
 
 	imagePositions.clear();
 	detector.detect(img,  imagePositions);
