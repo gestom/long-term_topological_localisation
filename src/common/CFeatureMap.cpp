@@ -161,9 +161,9 @@ void CFeatureMap::fremenTest(int order)
 
 int CFeatureMap::extract(Mat img,int number)
 {
+	//for Binary descriptors (BRIEF,BRISK), set the L2_NORM in CFeatureMap.h to false, for real valued descriptors, set the L2_NORM to true
 	StarFeatureDetector detector(45,0,10,8,5);
 	BriefDescriptorExtractor extractor;
-	//SIFT detector(200,3,0,10,1.6);
 
 	imagePositions.clear();
 	detector.detect(img,  imagePositions);
