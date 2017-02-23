@@ -1,4 +1,5 @@
 d='stromovka'
+order=0
 
 function extend_figure
 {
@@ -54,8 +55,8 @@ if [ ! -e $SUMMARY ]; then mkdir $SUMMARY;fi
 
 for numFeatures in $(seq -w 1 1 50); 
 do
-echo $EXE test $IMAGES $MAPS $numFeatures 0 
-$EXE test $IMAGES $MAPS $numFeatures 0 >$REPORTS/$numFeatures-new.txt 2>/dev/null
+echo $EXE test $IMAGES $MAPS $numFeatures $order 
+$EXE test $IMAGES $MAPS $numFeatures $order >$REPORTS/$numFeatures-new.txt 2>/dev/null
 done
 
 rm -f $SUMMARY/report.pdf
