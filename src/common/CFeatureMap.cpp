@@ -164,8 +164,8 @@ int CFeatureMap::extract(Mat img,int number)
 	//for Binary descriptors (BRIEF,BRISK), set the L2_NORM in CFeatureMap.h to false, for real valued descriptors, set the L2_NORM to true
 	//StarFeatureDetector detector(45,0,10,8,5);
 	//BriefDescriptorExtractor extractor;
-	BRISK detector;
-	BRISK extractor;
+	SURF detector;
+	SURF extractor;
 	imagePositions.clear();
 	detector.detect(img,  imagePositions);
 	if (imagePositions.size() > number)
