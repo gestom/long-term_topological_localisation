@@ -16,7 +16,7 @@ This allows to predict the feature visibility at a time when the robot performs 
 
 ### Automated benchmark
 
-This repository allows for automated benchmarking using the approach described in [[3](#references)]. If you would like to quickly test any improvements of our method, simply do your changes in the code and open a pull request. A Jenkins server will automatically compile your code, compare it against the method presented in [[1,2](#references)] and send you a detailed report.
+This repository allows for automated benchmarking using the approach described in [[3](#references)]. If you would like to quickly test any improvements of our method, for the repository, do your changes in the code and open a pull request. A Jenkins server will automatically compile your code, compare it against the method presented in [[1,2](#references)] and send you a detailed report.
 
 
 ### How to use the software
