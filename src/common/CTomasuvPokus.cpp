@@ -2,12 +2,18 @@
 
 CTomasuvPokus::CTomasuvPokus()
 {
-	probability = 0.5; 
+	for(int i = 0; i < 12; i++)
+	{	
+		probability[i] = 0;
+	} 
 }
 
 CTomasuvPokus::CTomasuvPokus(int orderi,float gaini,int length)
 {
-	probability = 0.5; 
+	for(int i = 0; i < 12; i++)
+	{	
+		probability[i] = 0;
+	}  
 }
 
 CTomasuvPokus::~CTomasuvPokus()
@@ -16,14 +22,16 @@ CTomasuvPokus::~CTomasuvPokus()
 
 void CTomasuvPokus::build(unsigned int* times, unsigned char* signal, int length, int orderi)
 {
-	int positive = 0;
-	for (int i = 0;i<length;i++) positive += signal[i];
-	probability = (float)(positive)/length;
+	for (int i = 0;i<length;i++) 
+	{
+		probability[i] = signal[i];
+	}
 }
 
 float CTomasuvPokus::estimate(int time, int maxOrder)
 {
-	return probability;
+	int index = time / 7200;
+	return probability[index];
 }
 
 int CTomasuvPokus::load(FILE* file)

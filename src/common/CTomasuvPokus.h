@@ -22,7 +22,7 @@ class CTomasuvPokus: public CFrelement
 		float estimate(int time, int maxOrder);
 		int save(FILE* file, bool lossy = false);
 		int load(FILE* file);
-		float probability;
+		int probability[12];
 };
 
 #endif
