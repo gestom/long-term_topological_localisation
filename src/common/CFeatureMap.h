@@ -16,7 +16,8 @@
 using namespace std;
 using namespace cv;
 
-#define ELEMENT CFrelement
+#define ELEMENT CTomasuvPokus
+//#define ELEMENT CFrelement
 //matching restrictions
 #define VERTICAL_LIMIT 50
 #define HORIZONTAL_LIMIT 400
