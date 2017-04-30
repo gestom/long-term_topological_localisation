@@ -15,16 +15,16 @@ CFeatureMap::CFeatureMap(int numImages)
 	debug = false;
 	totalPics = numImages;
 	numPics = 0;
-	frelementArray = NULL;
+	temporalArray = NULL;
 	times = Mat::zeros(1,totalPics,CV_32SC1);
 }
 
 CFeatureMap::~CFeatureMap()
 {
-	if (frelementArray != NULL)
+	if (temporalArray != NULL)
 	{
-		for (int i = 0;i<visibility.rows;i++) delete frelementArray[i];
-		free(frelementArray);
+		//TODOfor (int i = 0;i<visibility.rows;i++) delete temporalArray[i];
+		free(temporalArray);
 	}
 }
 
@@ -154,9 +154,9 @@ int CFeatureMap::drawCurrentMatches(Mat img1,Mat img2)
 	return 0;
 }
 
-void CFeatureMap::fremenTest(int order)
+void CFeatureMap::fremenTest()
 {
-	for (int i=0;i<visibility.cols;i++)printf("%i %f %i\n",visibility.at<char>(0,i),frelementArray[0]->estimate(i*600,order),frelementArray[0]->estimate(i*600,order)>0.5);
+	for (int i=0;i<visibility.cols;i++)printf("%i %f %i\n",visibility.at<char>(0,i),temporalArray[0]->estimate(i*600),temporalArray[0]->estimate(i*600)>0.5);
 }
 
 int CFeatureMap::extract(Mat img,int number)
@@ -214,19 +214,30 @@ void CFeatureMap::reidentify(unsigned int currentTime,float distanceThreshold,bo
 	numPics++;
 }
 
-void CFeatureMap::fremenize(int order)
+void CFeatureMap::temporalise(const char* model,int order)
 {
 	unsigned char *signal = (unsigned char*)calloc(visibility.cols,sizeof(unsigned char));
 	unsigned int *timeArray = (unsigned int*)calloc(visibility.cols,sizeof(unsigned int));
 
-	frelementArray = (CFrelement**) calloc(visibility.rows,sizeof(CFrelement*));
+	temporalArray = (CTemporal**) calloc(visibility.rows,sizeof(CTemporal*));
 	for (int j=0;j<visibility.cols;j++) timeArray[j] = times.at<uint32_t>(0,j);
+	char id[10];
 	for (int i=0;i<visibility.rows;i++)
 	{
+		sprintf(id,"%05i",i);
 		for (int j=0;j<visibility.cols;j++) signal[j] = visibility.at<char>(i,j);
-		frelementArray[i] = new CFrelement();
-		frelementArray[i]->build(timeArray,signal,totalPics,order);
-		if (debug) frelementArray[i]->print();
+
+		/*traning model*/
+		if (model[0] == 'I') temporalArray[i] = new CTimeHist(id);
+		else if (model[0] == 'A') temporalArray[i] = new CTimeAdaptiveHist(id);
+		else if (model[0] == 'F') temporalArray[i] = new CFrelement(id);
+		else if (model[0] == 'M') temporalArray[i] = new CTimeMean(id);
+		else if (model[0] == 'G') temporalArray[i] = new CPerGaM(id);
+		else temporalArray[i] = new CTimeNone(id);
+		temporalArray[i]->init(86400,order,1);
+		for (int j=0;j<totalPics;j++) temporalArray[i]->add(timeArray[j],signal[j]);
+		temporalArray[i]->update(order);
+		if (debug) temporalArray[i]->print();
 	}
 	free(signal);
 	free(timeArray);
@@ -260,13 +271,13 @@ void CFeatureMap::sortAndReduce(float threshold)
 	visibility = vis;
 }
 
-float CFeatureMap::predictThreshold(unsigned int time,float threshold,int order)
+float CFeatureMap::predictThreshold(unsigned int time,float threshold)
 {
 	currentPositions.clear();
 	currentDescriptors.resize(0,0);
 	for (int i = 0;i<globalPositions.size();i++)
 	{
-		if (frelementArray[i]->estimate(time,order) > threshold)
+		if (temporalArray[i]->estimate(time) > threshold)
 		{
 			currentPositions.push_back(globalPositions[i]);
 			currentDescriptors.push_back(globalDescriptors.row(i));
@@ -276,12 +287,12 @@ float CFeatureMap::predictThreshold(unsigned int time,float threshold,int order)
 }
 
 
-float CFeatureMap::predictNumber(unsigned int time,int number,int order)
+float CFeatureMap::predictNumber(unsigned int time,int number)
 {
 	currentPositions = globalPositions;
 	for (int i = 0;i<currentPositions.size();i++){
 		currentPositions[i].class_id = i;
-		currentPositions[i].angle = frelementArray[i]->estimate(time,order);
+		currentPositions[i].angle = temporalArray[i]->estimate(time);
 	}
 	if (currentPositions.size()<number) number = currentPositions.size();
 	std::sort(currentPositions.begin(),currentPositions.end(),compareAngle);
@@ -296,7 +307,7 @@ float CFeatureMap::predictNumber(unsigned int time,int number,int order)
 
 void CFeatureMap::print()
 {
-	for (int i=0;i<visibility.rows;i++) frelementArray[i]->print();
+	for (int i=0;i<visibility.rows;i++) temporalArray[i]->print();
 }
 
 
@@ -342,17 +353,18 @@ void CFeatureMap::savePredictions(const char* baseName,int timeQuantum)
 		fprintf(file,"\n");
 	}
 	fclose(file);
-	
+/*TODO	
 	for (int o=0;o<7;o++)
 	{
 		sprintf(name,"%s.fremen_%i",baseName,o);
 		file = fopen(name,"w+");
 		for (int t=0;t<visibility.cols;t++){
-			for (int f=0;f<visibility.rows;f++) fprintf(file,"%.3f ",frelementArray[f]->estimate(t*timeQuantum,o));
+			for (int f=0;f<visibility.rows;f++) fprintf(file,"%.3f ",temporalArray[f]->estimate(t*timeQuantum));
 			fprintf(file,"\n");
 		}	
 		fclose(file);
 	} 	
+*/
 }
 void CFeatureMap::save(const char* name)
 {
@@ -369,12 +381,13 @@ void CFeatureMap::save(const char* name)
 	storage << "Descriptors" << globalDescriptors;
 	storage << "Visibility" << visibility;
 	storage << "Times" << times;
-	if (frelementArray!= NULL)
+	/*TODO saving*/
+/*	if (temporalArray!= NULL)
 	{
-		cv::Mat fremen;
+		cv::Mat temporal;
 		for (int i = 0;i< globalPositions.size();i++)
 		{
-			if (debug) frelementArray[i]->print();
+			if (debug) temporalArray[i]->print();
 			cv::Mat fM = (Mat_<float>(1,5) << (float)0,(float)0,(float)i,(float)frelementArray[i]->order,(float)frelementArray[i]->gain);
 			fremen.push_back(fM);
 			for (int j = 0;j<frelementArray[i]->order ;j++){
@@ -383,8 +396,8 @@ void CFeatureMap::save(const char* name)
 				fremen.push_back(fM);
 			}
 		}
-		storage << "Fremen" << fremen;
-	}
+		storage << "Fremen" << temporal;
+	}*/
 	storage.release();
 }
 
@@ -393,7 +406,7 @@ bool CFeatureMap::load(const char* name)
 	cv::FileStorage storage(name, cv::FileStorage::READ);
 	if (storage.isOpened() == false) return -1;
 	globalPositions.clear();
-	cv::Mat gP,fremen;
+	cv::Mat gP,temporal;
 	storage["Keypoints"] >> gP;
 	for (int i=0;i<gP.rows;i++)
 	{
@@ -404,10 +417,11 @@ bool CFeatureMap::load(const char* name)
 	storage["Descriptors"] >> globalDescriptors;
 	storage["Visibility"] >> visibility;
 	storage["Times"] >> times;
-	storage["Fremen"] >> fremen;
+	storage["Temporal"] >> temporal;
 	if (debug) printf("Loaded %ld features from %i images.\n",globalPositions.size(),visibility.cols);
 	int line = 0;
-	if (fremen.empty() == false){
+	/*generalised loading TODO*/
+/*	if (fremen.empty() == false){
 		frelementArray = (CFrelement**) calloc(visibility.rows,sizeof(CFrelement*));
 		for (int i = 0;i< globalDescriptors.rows;i++)
 		{
@@ -422,7 +436,7 @@ bool CFeatureMap::load(const char* name)
 				line++;
 			}
 		}
-	}
+	}*/
 	storage.release(); 
 	totalPics = visibility.cols;
 	return 0;

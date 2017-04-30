@@ -1,10 +1,8 @@
 OBJS=$(patsubst %.cpp,%.o,$(wildcard *.cpp))
 
 include ../Mk/local.Mk
-CXXINCLUDE+=-I./ -I../common -I../models -I../map 
+CXXINCLUDE+=-I./ -I../common 
 CXXINCLUDE+=-I/usr/local/include
-# SEARCH 
-CXXFLAGS+=-I../../../search/src
 
 all: $(OBJS) 
 

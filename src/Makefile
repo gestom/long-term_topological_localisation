@@ -1,5 +1,7 @@
 include Mk/local.Mk
 SUBDIRS+=common
+SUBDIRS+=models
+SUBDIRS+=map
 SUBDIRS+=main
 
 OBJS=$(wildcard ../obj/*.o)

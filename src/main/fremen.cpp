@@ -5,7 +5,6 @@
 #include <dirent.h>
 #include <string.h>
 #include "CRawImage.h" 
-#include "CFrelement.h" 
 #include "CFeatureMap.h" 
 
 unsigned int times[10000];
@@ -110,7 +109,6 @@ int main(int argc,char *argv[])
 			map.reidentify(i*timeQuantum,0.7,false);
 			//map.drawReidentified(imgColor,imgColor);
 		}
-		map.fremenize(MAX_ADAPTIVE_ORDER+1);
 		map.save(argv[4]);
 		//map.fremenTest(atoi(argv[5]));
 	}
@@ -129,7 +127,7 @@ int main(int argc,char *argv[])
 			imgColor = imread(filename, CV_LOAD_IMAGE_COLOR);
 			imgGray  = imread(filename, CV_LOAD_IMAGE_GRAYSCALE);
 			printf("%i\n",imageMap.extract(imgGray,featuresToExtract));
-			map.predictThreshold(0,0,0);
+			map.predictThreshold(0,0);
 			map.match(&imageMap,true,&dummy);
 			//map.drawPredicted(imgColor);
 			map.drawCurrentMatches(imgColor,imgColor);
@@ -150,6 +148,7 @@ int main(int argc,char *argv[])
 			sprintf(filename,"%s/place_%i.map",argv[3],i);
 			if (maps[i].load(filename)==0) numMaps++;
 		}
+		for (int i=0;i<8;i++) maps[i].temporalise("FreMEn",atoi(argv[6]));
 		bool debug = true;
 		float matching[8];
 		float predicted[8];
@@ -179,9 +178,9 @@ int main(int argc,char *argv[])
 				{
 					if (debug) printf("Image: %i %04i : ",im,j);
 					if (atof(argv[4]) > 1){
-						predicted[j] = maps[j].predictNumber(times[i]*timeQuantum,atoi(argv[4]),atoi(argv[5]));
+						predicted[j] = maps[j].predictNumber(times[i]*timeQuantum,atof(argv[4]));
 					}else{
-						predicted[j] = maps[j].predictThreshold(times[i]*timeQuantum,atof(argv[4]),atoi(argv[5]));
+						predicted[j] = maps[j].predictThreshold(times[i]*timeQuantum,atof(argv[4]));
 					}
 					if (debug) printf("%02.0f ",matching[j]);
 				}
@@ -207,9 +206,9 @@ int main(int argc,char *argv[])
 					/*if no features are seen, then assume that the matching map is the one with least features visible*/
 					if (extracted == 0){
 						if (atof(argv[4]) > 1){
-							matching[j] = 1-predicted[j]/maps[j].predictNumber(times[i]*timeQuantum,1000,0)/10.0;
+							matching[j] = 1-predicted[j]/maps[j].predictNumber(times[i]*timeQuantum,1000)/10.0;
 						}else{
-							matching[j] = 1-predicted[j]/maps[j].predictThreshold(times[i]*timeQuantum,0.0,0)/10.0;
+							matching[j] = 1-predicted[j]/maps[j].predictThreshold(times[i]*timeQuantum,0.0)/10.0;
 						}
 						printf("Predicted %i %i %.0f %.3f\n",i,j,predicted[j],matching[j]); 
 					}
@@ -248,7 +247,7 @@ int main(int argc,char *argv[])
 					for (int j=0;j<numMaps;j++)
 					{
 						maps[j].debug = true;
-						predicted[j] = maps[j].predictThreshold(i*timeQuantum,atof(argv[4]),atoi(argv[5]));
+						predicted[j] = maps[j].predictThreshold(i*timeQuantum,atof(argv[4]));
 						maps[j].debug = false;
 						matching[j] = maps[j].match(&imageMap,true,&dummy);
 						sprintf(filename,"%s/place_%i/%05i.bmp",argv[2],j,i);

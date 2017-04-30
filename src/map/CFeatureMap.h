@@ -10,7 +10,12 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/nonfree/features2d.hpp>
 #include <opencv2/highgui/highgui.hpp>
-#include "CFrelement.h" 
+#include "CFrelement.h"
+#include "CPerGaM.h"
+#include "CTimeAdaptiveHist.h"
+#include "CTimeHist.h"
+#include "CTimeNone.h"
+#include "CTimeMean.h"
 
 using namespace std;
 using namespace cv;
@@ -40,15 +45,15 @@ class CFeatureMap
 		int drawAllFeatures(Mat img);
 		int drawReidentified(Mat img1,Mat img2);
 		void distinctiveMatch(Mat& descriptors1,Mat& descriptors2, vector<DMatch>& matches,float distanceFactor,bool crosscheck);
-		void fremenize(int order);
+		void temporalise(const char* model,int order);
 		void print();
 		void binaryDescriptor(unsigned char *dst,unsigned char *in,int length);
-		float predictThreshold(unsigned int time,float threshold,int order);
-		float predictNumber(unsigned int time,int number,int order);
+		float predictThreshold(unsigned int time,float threshold);
+		float predictNumber(unsigned int time,int number);
 		int match(CFeatureMap* map,bool geomtery,int *tentative);
 		int match(Mat& base,Mat& view, vector<DMatch>& matches,vector<KeyPoint> keypoints,bool geometry,int *tentative);
 		void sortAndReduce(float threshold);
-		void fremenTest(int order);
+		void fremenTest();
 		bool debug;	
 
 		vector<KeyPoint> globalPositions;
@@ -63,7 +68,7 @@ class CFeatureMap
 		Mat imageDescriptors;
 		vector<DMatch> matches;
 
-		CFrelement** frelementArray;
+		CTemporal** temporalArray;
 		int numFeatures;
 		int numPics;	
 		int totalPics;
