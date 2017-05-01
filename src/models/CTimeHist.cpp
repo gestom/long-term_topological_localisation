@@ -2,9 +2,9 @@
 
 using namespace std;
 
-CTimeHist::CTimeHist(const char* idd)
+CTimeHist::CTimeHist(int idd)
 {
-	strcpy(id,idd);
+	id=idd;
 	firstTime = -1;
 	lastTime = -1;
 	measurements = 0;
@@ -22,8 +22,9 @@ void CTimeHist::init(int iMaxPeriod,int elements,int models)
 	storedHistogram = (float*) malloc(sizeof(float)*numElements);	
 	measurementsHistogram = (int*) malloc(sizeof(int)*numElements);	
 	for (int i=0;i<numElements;i++){
-		predictHistogram[i] = 1.0/numModels; 
+		predictHistogram[i] = 0.5; 
 		measurementsHistogram[i] = 0;
+		storedHistogram[i] = 0;
 	}
 }
 
@@ -48,7 +49,7 @@ int CTimeHist::add(uint32_t time,float state)
 }
 
 /*not required in incremental version*/
-void CTimeHist::update(int modelOrder)
+void CTimeHist::update(int modelOrder,unsigned int* times,float* signal,int length)
 {
 	for (int i=0;i<numElements;i++){
 		 if (measurementsHistogram[i] > 0) predictHistogram[i] = storedHistogram[i]/measurementsHistogram[i];
@@ -58,10 +59,10 @@ void CTimeHist::update(int modelOrder)
 /*text representation of the fremen model*/
 void CTimeHist::print(bool verbose)
 {
-	std::cout << "Model " << id << " Size: " << measurements << " ";
+	std::cout << "Model " << id << " Size: " << measurements << " " << " Bins: " << numElements << " ";
 	if (verbose){
 		printf("Bin values: "); 
-		for (int i = 0;i<numElements;i++) printf("%.3f ",predictHistogram[i]);
+		for (int i = 0;i<numElements;i++) printf("%.3f ",storedHistogram[i]);
 	}
 	printf("\n"); 
 }
@@ -112,4 +113,35 @@ int CTimeHist::load(FILE* file)
 	return -1;
 }
 
+int CTimeHist::exportToArray(double* array,int maxLen)
+{
+	int pos = 0;
+	array[pos++] = type;
+	array[pos++] = numElements;
+	array[pos++] = numModels;
+	array[pos++] = id;
+	array[pos++] = measurements;
 
+	for (int i = 0;i<numElements && pos < MAX_TEMPORAL_MODEL_SIZE;i++) array[pos++] = (double)storedHistogram[i];
+	for (int i = 0;i<numElements && pos < MAX_TEMPORAL_MODEL_SIZE;i++) array[pos++] = (double)measurementsHistogram[i];
+
+	if (pos == MAX_TEMPORAL_MODEL_SIZE) fprintf(stdout,"Could not save the model dur to its size\n");
+	return pos;
+}
+
+int CTimeHist::importFromArray(double* array,int len)
+{
+	int pos = 0;
+	type = (ETemporalType)array[pos++];
+	if (type != TT_HISTOGRAM) fprintf(stderr,"Error loading the model, type mismatch.\n");
+	numElements = array[pos++];
+	numModels = array[pos++];
+	id = array[pos++];  
+	measurements = array[pos++]; 
+ 
+	for (int i = 0;i<numElements && pos < MAX_TEMPORAL_MODEL_SIZE;i++)storedHistogram[i]=array[pos++]; 
+	for (int i = 0;i<numElements && pos < MAX_TEMPORAL_MODEL_SIZE;i++)measurementsHistogram[i]=array[pos++]; 
+
+	if (pos == MAX_TEMPORAL_MODEL_SIZE) fprintf(stdout,"Model was not properly saved before.\n");
+	return pos;
+}

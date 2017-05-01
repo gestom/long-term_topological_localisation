@@ -30,7 +30,7 @@ using namespace std;
 class CFrelement: public CTemporal
 {
 	public:
-		CFrelement(const char* id);
+		CFrelement(int id);
 		~CFrelement();
 
 		//adds a serie of measurements to the data
@@ -41,9 +41,11 @@ class CFrelement: public CTemporal
 		float estimate(uint32_t time);
 		float predict(uint32_t time);
 
-		void update(int modelOrder);
+		void update(int maxOrder,unsigned int* times = NULL,float* signal = NULL,int length = 0);
 		void print(bool verbose=true);
 
+		int exportToArray(double* array,int maxLen);
+		int importFromArray(double* array,int len);
 		int save(FILE* file,bool lossy = false);
 		int load(FILE* file);
 		int save(char* name,bool lossy = false);
@@ -51,10 +53,11 @@ class CFrelement: public CTemporal
 		
 		float storedGain;
 		SFrelement *storedFrelements;
-		char id[MAX_ID_LENGTH];
+		int id;
 		float predictGain;
 		SFrelement *predictFrelements;
 		int measurements,order;
+		int shortestTime;
 		int64_t firstTime;
 		int64_t  lastTime;
 };

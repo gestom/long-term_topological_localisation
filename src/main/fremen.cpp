@@ -25,10 +25,10 @@ float confVec[8];
 
 int compare (const void * a, const void * b)
 {
-  if ( *(int*)a <  *(int*)b ) return -1;
-  if ( *(int*)a == *(int*)b ) return 0;
-  if ( *(int*)a >  *(int*)b ) return 1;
-  return 0;
+	if ( *(int*)a <  *(int*)b ) return -1;
+	if ( *(int*)a == *(int*)b ) return 0;
+	if ( *(int*)a >  *(int*)b ) return 1;
+	return 0;
 }
 
 void listFiles(const char* name)
@@ -109,6 +109,7 @@ int main(int argc,char *argv[])
 			map.reidentify(i*timeQuantum,0.7,false);
 			//map.drawReidentified(imgColor,imgColor);
 		}
+		map.temporalise(argv[5],atoi(argv[6]));
 		map.save(argv[4]);
 		//map.fremenTest(atoi(argv[5]));
 	}
@@ -146,9 +147,10 @@ int main(int argc,char *argv[])
 		for (int i=0;i<8;i++)
 		{
 			sprintf(filename,"%s/place_%i.map",argv[3],i);
+			printf("%s/place_%i.map\n",argv[3],numMaps);
 			if (maps[i].load(filename)==0) numMaps++;
 		}
-		for (int i=0;i<8;i++) maps[i].temporalise("FreMEn",atoi(argv[6]));
+		//for (int i=0;i<8;i++) maps[i].temporalise(argv[6],atoi(argv[5]));
 		bool debug = true;
 		float matching[8];
 		float predicted[8];
@@ -238,6 +240,7 @@ int main(int argc,char *argv[])
 					confVec[index]++;
 				}else if (index == -1){
 					unknown++;
+					//failures++;
 				}else{
 					failures++;
 					confVec[index]++;

@@ -30,7 +30,7 @@ typedef struct
 class CPerGaM: public CTemporal
 {
 public:
-  CPerGaM(const char* id);
+  CPerGaM(int id);
   ~CPerGaM();
 
   //adds a serie of measurements to the data
@@ -43,10 +43,12 @@ public:
   //predicts the probability for the given times - using updated histogram 
   float predict(uint32_t time);
 
-  void update(int modelOrder);
+  void update(int maxOrder,unsigned int* times = NULL,float* signal = NULL,int length = 0);
   void print(bool verbose=true);
 
-  char id[MAX_ID_LENGTH];
+  int id;
+  int exportToArray(double* array,int maxLen);
+  int importFromArray(double* array,int len);
   int save(FILE* file,bool lossy = false);
   int load(FILE* file);
   int save(char* name,bool lossy = false);

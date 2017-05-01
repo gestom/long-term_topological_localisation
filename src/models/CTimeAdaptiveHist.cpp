@@ -3,15 +3,15 @@
 #define MEASURE_DEF_THRES 100
 using namespace std;
 
-CTimeAdaptiveHist::CTimeAdaptiveHist(const char* idd)
+CTimeAdaptiveHist::CTimeAdaptiveHist(int idd)
 {
-    strcpy(id,idd);
+    id = idd;
     firstTime = -1;
     lastTime = -1;
     measurements = 0;
     maxPeriod = 0;
     numElements = 0;
-    type = TT_HISTOGRAM;
+    type = TT_ADAPTIVE;
 }
 
 void CTimeAdaptiveHist::init(int imaxPeriod,int elements,int numActivities)
@@ -25,7 +25,7 @@ void CTimeAdaptiveHist::init(int imaxPeriod,int elements,int numActivities)
     for (int i=0;i<numElements;i++)
     {
         measurementHistogram[i]=0;
-        predictHistogram[i] = storedHistogram[i] = 1.0/12.0;
+        predictHistogram[i] = storedHistogram[i] = 0.5;
     }
 }
 
@@ -49,7 +49,7 @@ int CTimeAdaptiveHist::add(uint32_t time,float state)
 }
 
 /*not required in incremental version*/
-void CTimeAdaptiveHist::update(int modelOrder)
+void CTimeAdaptiveHist::update(int modelOrder,unsigned int* times,float* signal,int length)
 {
     for (int i=0;i<numElements;i++) predictHistogram[i] = storedHistogram[i];
 }
@@ -125,5 +125,35 @@ int CTimeAdaptiveHist::load(FILE* file)
     return -1;
 }
 
+int CTimeAdaptiveHist::exportToArray(double* array,int maxLen)
+{
+	int pos = 0;
+	array[pos++] = type;
+	array[pos++] = numElements;
+	array[pos++] = id;
+	array[pos++] = def_sample_threshold;
+	array[pos++] = measurements;
 
+	for (int i = 0;i<numElements && pos < MAX_TEMPORAL_MODEL_SIZE;i++) array[pos++] = storedHistogram[i];
+	for (int i = 0;i<numElements && pos < MAX_TEMPORAL_MODEL_SIZE;i++) array[pos++] = measurementHistogram[i];
 
+	if (pos == MAX_TEMPORAL_MODEL_SIZE) fprintf(stdout,"Could not save the model dur to its size\n");
+	return pos;
+}
+
+int CTimeAdaptiveHist::importFromArray(double* array,int len)
+{
+	int pos = 0;
+	type = (ETemporalType)array[pos++];
+	numElements = array[pos++];
+	if (type != TT_ADAPTIVE) fprintf(stderr,"Error loading the model, type mismatch.\n");
+	id = array[pos++];  
+	def_sample_threshold = array[pos++];
+	measurements = array[pos++]; 
+ 
+	for (int i = 0;i<numElements && pos < MAX_TEMPORAL_MODEL_SIZE;i++)storedHistogram[i]=array[pos++]; 
+	for (int i = 0;i<numElements && pos < MAX_TEMPORAL_MODEL_SIZE;i++)measurementHistogram[i]=array[pos++]; 
+
+	if (pos == MAX_TEMPORAL_MODEL_SIZE) fprintf(stdout,"Model was not properly saved before.\n");
+	return pos;
+}

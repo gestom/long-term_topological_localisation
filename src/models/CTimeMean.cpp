@@ -2,9 +2,9 @@
 
 using namespace std;
 
-CTimeMean::CTimeMean(const char* idd)
+CTimeMean::CTimeMean(int idd)
 {
-	strcpy(id,idd);
+	id=idd;
 	firstTime = -1;
 	lastTime = -1;
 	measurements = 0;
@@ -17,13 +17,14 @@ CTimeMean::CTimeMean(const char* idd)
 void CTimeMean::init(int iMaxPeriod,int elements,int numActivities)
 {
 	maxPeriod = iMaxPeriod;
-	numElements = elements;
+	numElements = 1;
 	estimation = 1.0/numActivities; 
 }
 
 CTimeMean::~CTimeMean()
 {
 }
+
 
 // adds new state observations at given times
 int CTimeMean::add(uint32_t time,float state)
@@ -36,7 +37,7 @@ int CTimeMean::add(uint32_t time,float state)
 }
 
 /*not required in incremental version*/
-void CTimeMean::update(int modelOrder)
+void CTimeMean::update(int modelOrder,unsigned int* times,float* signal,int length)
 {
 	if (measurements  > 0) estimation = positive/measurements;
 }
@@ -47,7 +48,7 @@ void CTimeMean::print(bool verbose)
 	std::cout << "Model " << id << " Size: " << measurements << " ";
 	if (verbose){
 		printf("Mean: "); 
-		for (int i = 0;i<numElements;i++) printf("%.3f ",positive/measurements);
+		printf("%.3f ",positive/measurements);
 	}
 	printf("\n"); 
 }
@@ -96,4 +97,23 @@ int CTimeMean::load(FILE* file)
 	return -1;
 }
 
+int CTimeMean::exportToArray(double* array,int maxLen)
+{
+	int pos = 0;
+	array[pos++] = type;
+	array[pos++] = positive;
+	array[pos++] = id;
+	array[pos++] = measurements;
+	return pos;
+}
 
+int CTimeMean::importFromArray(double* array,int len)
+{
+	int pos = 0;
+	type = (ETemporalType)array[pos++];
+	if (type != TT_MEAN) fprintf(stderr,"Error loading the model, type mismatch.\n");
+	positive = array[pos++];
+	id = array[pos++];  
+	measurements = array[pos++]; 
+	return pos;
+}

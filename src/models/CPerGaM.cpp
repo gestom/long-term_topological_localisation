@@ -2,10 +2,10 @@
 
 using namespace std;
 
-CPerGaM::CPerGaM(const char* name)
+CPerGaM::CPerGaM(int name)
 {
 	numBins = 1440;
-	strcpy(id,name);
+	id = name;
 	firstTime = -1;
 	lastTime = -1;
 	measurements = 0;
@@ -49,7 +49,7 @@ int CPerGaM::add(uint32_t time,float state)
 	return 0; 
 }
 
-void CPerGaM::update(int order)
+void CPerGaM::update(int order,unsigned int* times,float* signal,int length)
 {
 	numElements = order;
 	float *input = (float*)calloc(numBins,sizeof(float));
@@ -103,7 +103,7 @@ void CPerGaM::update(int order)
 	//expectation step - calculate Gaussians
 	float *y;
 	float w,m,s;
-	for (int steps = 0;steps<100;steps++){
+	for (int steps = 0;steps<10;steps++){
 		memset(output,0,numBins*sizeof(float));
 		for (int i = 0;i<order;i++)
 		{
@@ -196,12 +196,55 @@ float CPerGaM::predict(uint32_t time)
 
 void CPerGaM::print(bool verbose)
 {
-	for (int i=0;i<numElements;i++) printf("%.3f ",gaussian[i].mean);
+	std::cout << "Model: " << id << " Measurements: " << measurements << " ";
+	for (int i=0;i<numElements && verbose;i++) printf("GMM %i params %.3f %.3f %.3f",i,gaussian[i].mean,gaussian[i].sigma,gaussian[i].weight);
 	printf("\n");
-	for (int i=0;i<numElements;i++) printf("%.3f ",gaussian[i].sigma);
-	printf("\n");
-	for (int i=0;i<numElements;i++) printf("%.3f ",gaussian[i].weight);
-	printf("\n");
+}
+
+int CPerGaM::importFromArray(double* array,int len)
+{
+	int pos = 0;
+	type = (ETemporalType)array[pos++];
+	if (type != TT_PERGAM) fprintf(stderr,"Error loading the model, type mismatch.\n");
+	numElements = array[pos++];  
+	id = array[pos++];
+	numBins = array[pos++];
+	measurements = array[pos++]; 
+	memcpy(&firstTime,&array[pos++],sizeof(double));
+	memcpy(&lastTime,&array[pos++],sizeof(double));
+	for (int i = 0;i<numElements&& pos < MAX_TEMPORAL_MODEL_SIZE;i++){
+		gaussian[i].mean = array[pos++];
+		gaussian[i].sigma = array[pos++];
+		gaussian[i].weight = array[pos++];
+		gaussian[i].frequency = array[pos++];
+	}
+	for (int i = 0;i<numBins && pos < MAX_TEMPORAL_MODEL_SIZE;i++)storedHistogram[i]=array[pos++]; 
+
+	if (pos == MAX_TEMPORAL_MODEL_SIZE) fprintf(stdout,"Model was not properly saved before.\n");
+	return pos;
+
+}
+
+int CPerGaM::exportToArray(double* array,int maxLen)
+{
+	int pos = 0;
+	array[pos++] = type;
+	array[pos++] = numElements;
+	array[pos++] = id;
+	array[pos++] = numBins;
+	array[pos++] = measurements;
+	memcpy(&array[pos++],&firstTime,sizeof(double));
+	memcpy(&array[pos++],&lastTime,sizeof(double));
+	for (int i = 0;i<numElements&& pos < MAX_TEMPORAL_MODEL_SIZE;i++){
+		array[pos++] = gaussian[i].mean;
+		array[pos++] = gaussian[i].sigma;
+		array[pos++] = gaussian[i].weight;
+		array[pos++] = gaussian[i].frequency;
+	}
+	for (int i = 0;i<numBins && pos < MAX_TEMPORAL_MODEL_SIZE;i++)array[pos++] = storedHistogram[i];
+
+	if (pos == MAX_TEMPORAL_MODEL_SIZE) fprintf(stdout,"Could not save the model dur to its size\n");
+	return pos;
 }
 
 int CPerGaM::save(char* name,bool lossy)

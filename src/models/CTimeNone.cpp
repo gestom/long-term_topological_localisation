@@ -2,9 +2,9 @@
 
 using namespace std;
 
-CTimeNone::CTimeNone(const char* idd)
+CTimeNone::CTimeNone(int idd)
 {
-	strcpy(id,idd);
+	id=idd;
 	measurements = 0;
 	numElements = 0;
 	type = TT_NONE;
@@ -13,7 +13,7 @@ CTimeNone::CTimeNone(const char* idd)
 void CTimeNone::init(int iMaxPeriod,int elements,int numActivities)
 {
 	maxPeriod = iMaxPeriod;
-	numElements = elements;
+	numElements = 1;
 	estimation = 1.0/numActivities; 
 }
 
@@ -28,7 +28,7 @@ int CTimeNone::add(uint32_t time,float state)
 	return 0; 
 }
 
-void CTimeNone::update(int modelOrder)
+void CTimeNone::update(int modelOrder,unsigned int* times,float* signal,int length)
 {
 }
 
@@ -76,3 +76,23 @@ int CTimeNone::load(FILE* file)
 }
 
 
+int CTimeNone::exportToArray(double* array,int maxLen)
+{
+	int pos = 0;
+	array[pos++] = type;
+	array[pos++] = estimation;
+	array[pos++] = id;
+	array[pos++] = measurements;
+	return pos;
+}
+
+int CTimeNone::importFromArray(double* array,int len)
+{
+	int pos = 0;
+	type = (ETemporalType)array[pos++];
+	if (type != TT_NONE) fprintf(stderr,"Error loading the model, type mismatch.\n");
+	estimation = array[pos++];
+	id = array[pos++];  
+	measurements = array[pos++]; 
+	return pos;
+}

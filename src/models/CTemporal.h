@@ -10,16 +10,18 @@
 #include <stdint.h>
 #include "CTimer.h"
 
-#define MAX_ID_LENGTH 100
-	
+#define	MAX_TEMPORAL_MODEL_SIZE 10000
+
 using namespace std;
 
 typedef enum{
-	TT_FREMEN = 0,
-	TT_PERGAM,
+	TT_NONE	= 0,
 	TT_MEAN,
+	TT_FREMEN,
+	TT_PERGAM,
 	TT_HISTOGRAM,
-	TT_NONE	
+	TT_ADAPTIVE,
+	TT_NEAREST
 }ETemporalType;
 
 class CTemporal
@@ -36,9 +38,11 @@ class CTemporal
 		virtual float estimate(uint32_t time) = 0;
 		virtual float predict(uint32_t time) = 0;
 
-		virtual void update(int modelOrder) = 0;
+		virtual void update(int maxOrder,unsigned int* times = NULL,float* signal = NULL,int length = 0) = 0;
 		virtual void print(bool verbose=true) = 0;
 
+		virtual int exportToArray(double* array,int maxLen) = 0;
+		virtual int importFromArray(double* array,int len) = 0;
 		virtual int save(FILE* file,bool lossy = false) = 0;
 		virtual int load(FILE* file) = 0;
 		virtual int save(char* name,bool lossy = false) = 0;

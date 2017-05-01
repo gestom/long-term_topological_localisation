@@ -17,7 +17,7 @@ using namespace std;
 class CTimeNone: public CTemporal
 {
 	public:
-		CTimeNone(const char* idd);
+		CTimeNone(int idd);
 		~CTimeNone();
 
 		void init(int iMaxPeriod,int elements,int numActivities);
@@ -29,10 +29,12 @@ class CTimeNone: public CTemporal
 
 		float predict(uint32_t time);
 
-		void update(int modelOrder);
+		void update(int maxOrder,unsigned int* times = NULL,float* signal = NULL,int length = 0);
 		void print(bool verbose=true);
 
-		char id[MAX_ID_LENGTH];
+		int id;
+		int exportToArray(double* array,int maxLen);
+		int importFromArray(double* array,int len);
 		int save(FILE* file,bool lossy = false);
 		int load(FILE* file);
 		int save(char* name,bool lossy = false);

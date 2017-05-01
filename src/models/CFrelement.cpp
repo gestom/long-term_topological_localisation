@@ -8,10 +8,9 @@ int fremenSort(const void* i,const void* j)
 	 return -1;
 }
 
-CFrelement::CFrelement(const char* name)
+CFrelement::CFrelement(int idi)
 {
-	strcpy(id,name);
-
+	id = idi;
 	//initialization of the frequency set
 	storedGain = 0.5;
 	predictGain = 0.5;
@@ -24,8 +23,8 @@ CFrelement::CFrelement(const char* name)
 
 void CFrelement::init(int iMaxPeriod,int elements,int numActivities)
 {
-	maxPeriod = 86400*7;
-	numElements = 24*7;
+	maxPeriod = 86400;
+	numElements = 7*24;
 	storedFrelements = (SFrelement*)malloc(sizeof(SFrelement)*numElements);
 	predictFrelements = (SFrelement*)malloc(sizeof(SFrelement)*numElements);
 	for (int i=0;i<numElements;i++) storedFrelements[i].amplitude = storedFrelements[i].phase = 0; 
@@ -50,6 +49,8 @@ int CFrelement::add(uint32_t time,float state)
 			storedFrelements[i].imagBalance = 0; 
 		}
 		firstTime = time;
+	}else{
+		if (time - lastTime < shortestTime) shortestTime = time-lastTime;
 	}
 	lastTime = time;
 
@@ -89,7 +90,7 @@ int CFrelement::add(uint32_t time,float state)
 }
 
 /*not required in incremental version*/
-void CFrelement::update(int modelOrder)
+void CFrelement::update(int modelOrder,unsigned int* times,float* signal,int length)
 {
 	//establish amplitudes and phase shifts
 	float re,im;
@@ -99,7 +100,7 @@ void CFrelement::update(int modelOrder)
 	{
 		re = storedFrelements[i].realStates-storedFrelements[i].realBalance;
 		im = storedFrelements[i].imagStates-storedFrelements[i].imagBalance;
-		if (0.5*storedFrelements[i].period <= duration) storedFrelements[i].amplitude = sqrt(re*re+im*im)/measurements; else storedFrelements[i].amplitude = 0;
+		if (1.5*storedFrelements[i].period <= duration && storedFrelements[i].period > shortestTime*2) storedFrelements[i].amplitude = sqrt(re*re+im*im)/measurements; else storedFrelements[i].amplitude = 0;
 		if (storedFrelements[i].amplitude < FREMEN_AMPLITUDE_THRESHOLD) storedFrelements[i].amplitude = 0;
 		storedFrelements[i].phase = atan2(im,re);
 	}
@@ -107,9 +108,30 @@ void CFrelement::update(int modelOrder)
 	//sort the spectral components
 	qsort(storedFrelements,numElements,sizeof(SFrelement),fremenSort);
 
+	if (modelOrder > numElements) modelOrder = numElements;
 	order = modelOrder;
-	if (order > numElements) order = numElements;
 	for (int i = 0;i<order;i++) predictFrelements[i] = storedFrelements[i];
+
+	/*if given this info, the model tries to determine optimal model order to prevent overfit*/	
+	if (times != NULL && signal != NULL && length > 0){
+		int bestOrder = 0;
+		for (int o = 0;o<modelOrder;o++){
+			float error = 0;
+			float minError = length*10;
+			order = 0;
+			for (int i = 0;i<length;i++)
+			{
+				order = o;	
+				error += fabs(estimate(times[i])-signal[i]);
+			}
+			if (error < minError)
+			{
+				minError = error;
+				bestOrder = o;
+			}
+		}
+		order = bestOrder;
+	}
 }
 
 /*text representation of the fremen model*/
@@ -134,6 +156,7 @@ float CFrelement::estimate(uint32_t time)
 	return estimate;
 }
 
+
 float CFrelement::predict(uint32_t time)
 {
 	float saturation = 0.01;
@@ -150,6 +173,55 @@ int CFrelement::save(char* name,bool lossy)
 	save(file);
 	fclose(file);
 	return 0;
+}
+
+int CFrelement::importFromArray(double* array,int len)
+{
+	int pos = 0;
+	type = (ETemporalType)array[pos++];
+	if (type != TT_FREMEN) fprintf(stderr,"Error loading the model, type mismatch.\n");
+	order = array[pos++];        
+	id = array[pos++];
+	storedGain = array[pos++];
+	predictGain = array[pos++];  
+	numElements = array[pos++];  
+	measurements = array[pos++]; 
+	shortestTime = array[pos++];
+	memcpy(&firstTime,&array[pos++],sizeof(double));
+	memcpy(&lastTime,&array[pos++],sizeof(double));
+	for (int i = 0;i<numElements;i++){
+		storedFrelements[i].realStates = array[pos++];
+		storedFrelements[i].imagStates = array[pos++];
+		storedFrelements[i].realBalance = array[pos++];
+		storedFrelements[i].imagBalance = array[pos++];
+		storedFrelements[i].period = array[pos++];	
+	}
+	update(order);
+	return 0;
+}
+
+int CFrelement::exportToArray(double* array,int maxLen)
+{
+	int pos = 0;
+	array[pos++] = type;
+	array[pos++] = order;
+	array[pos++] = id;
+	array[pos++] = storedGain;
+	array[pos++] = predictGain;
+	array[pos++] = numElements;
+	array[pos++] = measurements;
+	array[pos++] = shortestTime;
+	memcpy(&array[pos++],&firstTime,sizeof(double));
+	memcpy(&array[pos++],&lastTime,sizeof(double));
+	for (int i = 0;i<numElements;i++){
+		array[pos++] = storedFrelements[i].realStates;
+		array[pos++] = storedFrelements[i].imagStates;
+		array[pos++] = storedFrelements[i].realBalance;
+		array[pos++] = storedFrelements[i].imagBalance;
+		array[pos++] = storedFrelements[i].period;	
+	}
+	//printf("POPOPO: %ld %ld %i %i\n",sizeof(double),sizeof(int64_t),pos,8+5*numElements);
+	return pos;
 }
 
 int CFrelement::load(char* name)
@@ -178,5 +250,4 @@ int CFrelement::load(FILE* file)
 	fwrite(storedFrelements,sizeof(SFrelement),numElements,file);
 	return 0;
 }
-
 

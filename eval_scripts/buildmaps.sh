@@ -1,6 +1,6 @@
 EXE=../bin/fremen
-MAPS=$1/maps
-IMAGES=$1/training
+MAPS=../data/$1/maps
+IMAGES=../data/$1/training
 
 if [ ! -e $MAPS ]; then mkdir $MAPS;fi
 
@@ -9,8 +9,8 @@ do
 	echo -n Location $i:' ' 
 	$EXE build $IMAGES/place_$i $MAPS/place_$i.all
 	echo -n feature map created' '
-	$EXE reduce $MAPS/place_$i.all 0.0 $MAPS/place_$i.red 
+	$EXE reduce $MAPS/place_$i.all 0.2 $MAPS/place_$i.red 
 	echo -n and pruned.' ' 
-	$EXE recalculate $IMAGES/place_$i $MAPS/place_$i.red $MAPS/place_$i.map
+	$EXE recalculate $IMAGES/place_$i $MAPS/place_$i.red $MAPS/place_$i.map $2 $3
 	echo Feature visibility calculated.
 done

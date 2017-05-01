@@ -19,7 +19,7 @@ class CTimeAdaptiveHist: public CTemporal
 {
 
     public:
-        CTimeAdaptiveHist(const char* idd);
+        CTimeAdaptiveHist(int idd);
         ~CTimeAdaptiveHist();
 
 	void init(int iMaxPeriod,int elements,int numActivities);
@@ -36,10 +36,12 @@ class CTimeAdaptiveHist: public CTemporal
         float predict(uint32_t time,uint32_t sample_thres);
 
 
-        void update(int modelOrder);
+	void update(int maxOrder,unsigned int* times = NULL,float* signal = NULL,int length = 0);
         void print(bool verbose=true);
 
-        char id[MAX_ID_LENGTH];
+	int exportToArray(double* array,int maxLen);
+	int importFromArray(double* array,int len);
+        int id;
         int save(FILE* file,bool lossy = false);
         int load(FILE* file);
         int save(char* name,bool lossy = false);

@@ -216,27 +216,26 @@ void CFeatureMap::reidentify(unsigned int currentTime,float distanceThreshold,bo
 
 void CFeatureMap::temporalise(const char* model,int order)
 {
-	unsigned char *signal = (unsigned char*)calloc(visibility.cols,sizeof(unsigned char));
+	float *signal = (float*)calloc(visibility.cols,sizeof(float));
 	unsigned int *timeArray = (unsigned int*)calloc(visibility.cols,sizeof(unsigned int));
 
 	temporalArray = (CTemporal**) calloc(visibility.rows,sizeof(CTemporal*));
 	for (int j=0;j<visibility.cols;j++) timeArray[j] = times.at<uint32_t>(0,j);
-	char id[10];
 	for (int i=0;i<visibility.rows;i++)
 	{
-		sprintf(id,"%05i",i);
 		for (int j=0;j<visibility.cols;j++) signal[j] = visibility.at<char>(i,j);
 
 		/*traning model*/
-		if (model[0] == 'I') temporalArray[i] = new CTimeHist(id);
-		else if (model[0] == 'A') temporalArray[i] = new CTimeAdaptiveHist(id);
-		else if (model[0] == 'F') temporalArray[i] = new CFrelement(id);
-		else if (model[0] == 'M') temporalArray[i] = new CTimeMean(id);
-		else if (model[0] == 'G') temporalArray[i] = new CPerGaM(id);
-		else temporalArray[i] = new CTimeNone(id);
+		if (model[0] == 'I') temporalArray[i] = new CTimeHist(i);
+		else if (model[0] == 'A') temporalArray[i] = new CTimeAdaptiveHist(i);
+		else if (model[0] == 'F') temporalArray[i] = new CFrelement(i);
+		else if (model[0] == 'M') temporalArray[i] = new CTimeMean(i);
+		else if (model[0] == 'G') temporalArray[i] = new CPerGaM(i);
+		else temporalArray[i] = new CTimeNone(i);
 		temporalArray[i]->init(86400,order,1);
 		for (int j=0;j<totalPics;j++) temporalArray[i]->add(timeArray[j],signal[j]);
-		temporalArray[i]->update(order);
+		temporalArray[i]->update(order,timeArray,signal,totalPics);
+		if (i%100 == 0) printf("Feature %i out of %i\n",i,visibility.rows);
 		if (debug) temporalArray[i]->print();
 	}
 	free(signal);
@@ -366,6 +365,7 @@ void CFeatureMap::savePredictions(const char* baseName,int timeQuantum)
 	} 	
 */
 }
+
 void CFeatureMap::save(const char* name)
 {
 	cv::FileStorage storage(name, cv::FileStorage::WRITE);
@@ -381,23 +381,22 @@ void CFeatureMap::save(const char* name)
 	storage << "Descriptors" << globalDescriptors;
 	storage << "Visibility" << visibility;
 	storage << "Times" << times;
-	/*TODO saving*/
-/*	if (temporalArray!= NULL)
+	if (temporalArray!= NULL)
 	{
+		double exportArray[MAX_TEMPORAL_MODEL_SIZE];
 		cv::Mat temporal;
 		for (int i = 0;i< globalPositions.size();i++)
 		{
 			if (debug) temporalArray[i]->print();
-			cv::Mat fM = (Mat_<float>(1,5) << (float)0,(float)0,(float)i,(float)frelementArray[i]->order,(float)frelementArray[i]->gain);
-			fremen.push_back(fM);
-			for (int j = 0;j<frelementArray[i]->order ;j++){
-				SFrelement f = frelementArray[i]->frelements[j];
-				cv::Mat fM = (Mat_<float>(1,5) << (float)i,(float)j,f.amplitude,f.phase,f.frequency);
-				fremen.push_back(fM);
-			}
+			int size = temporalArray[i]->exportToArray(exportArray,MAX_TEMPORAL_MODEL_SIZE);
+			cv::Mat len(1,1,CV_64F,size);
+			temporal.push_back(len);
+			cv::Mat fM = cv::Mat(size, 1,CV_64F, &exportArray);	
+			temporal.push_back(fM);
+			//temporalArray[i]->print(true);
 		}
-		storage << "Fremen" << temporal;
-	}*/
+		storage << "Temporal" << temporal;
+	}
 	storage.release();
 }
 
@@ -413,30 +412,32 @@ bool CFeatureMap::load(const char* name)
 		cv::KeyPoint kp(gP.at<float>(i,0),gP.at<float>(i,1),gP.at<float>(i,2),gP.at<float>(i,3),gP.at<float>(i,4),gP.at<float>(i,5),gP.at<float>(i,6));
 		globalPositions.push_back(kp);
 	}
-
 	storage["Descriptors"] >> globalDescriptors;
 	storage["Visibility"] >> visibility;
 	storage["Times"] >> times;
 	storage["Temporal"] >> temporal;
 	if (debug) printf("Loaded %ld features from %i images.\n",globalPositions.size(),visibility.cols);
-	int line = 0;
-	/*generalised loading TODO*/
-/*	if (fremen.empty() == false){
-		frelementArray = (CFrelement**) calloc(visibility.rows,sizeof(CFrelement*));
+	if (temporal.empty() == false){
+		double importArray[MAX_TEMPORAL_MODEL_SIZE];
+		int currentPosition = 0;
+		temporalArray = (CTemporal**) calloc(visibility.rows,sizeof(CTemporal*));
 		for (int i = 0;i< globalDescriptors.rows;i++)
 		{
-			if ((fremen.at<float>(line,0) != 0) || (fremen.at<float>(line,1) != 0) || (fremen.at<float>(line,2) != i)) printf("Error when loading FreMEn feature visibility.\n"); 
-			frelementArray[i] = new CFrelement(fremen.at<float>(line,3),fremen.at<float>(line,4),visibility.cols);
-			line++;
-			for (int j = 0;j< frelementArray[i]->order;j++){
-				if ((fremen.at<float>(line,0) != i) || (fremen.at<float>(line,1) != j)) printf("Error when loading FreMEn feature visibility.\n"); 
-				frelementArray[i]->frelements[j].amplitude = fremen.at<float>(line,2);
-				frelementArray[i]->frelements[j].phase = fremen.at<float>(line,3);
-				frelementArray[i]->frelements[j].frequency = fremen.at<float>(line,4);
-				line++;
-			}
+			int len = temporal.at<double>(currentPosition++,0);
+			for (int j = 0;j<len;j++) importArray[j] = temporal.at<double>(currentPosition++,0);
+			ETemporalType model = (ETemporalType) importArray[0];	
+			if (model == TT_HISTOGRAM) temporalArray[i] = new CTimeHist(i);
+			else if (model == TT_ADAPTIVE) temporalArray[i] = new CTimeAdaptiveHist(i);
+			else if (model == TT_FREMEN) temporalArray[i] = new CFrelement(i);
+			else if (model == TT_MEAN) temporalArray[i] = new CTimeMean(i);
+			else if (model == TT_PERGAM) temporalArray[i] = new CPerGaM(i);
+			else temporalArray[i] = new CTimeNone(i);
+			temporalArray[i]->init(86400,importArray[1],1);
+			temporalArray[i]->importFromArray(importArray,len);
+			temporalArray[i]->update(importArray[1]);
+			//temporalArray[i]->print(true);
 		}
-	}*/
+	}
 	storage.release(); 
 	totalPics = visibility.cols;
 	return 0;
