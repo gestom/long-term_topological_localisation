@@ -18,8 +18,8 @@ int dummy =0;
 Mat imgColor;
 Mat imgGray;
 
-int timeQuantum = 7200; 		//for stromovka dataset: pretend that one year equals to one day, i.e. one month is 2 hours
-//int timeQuantum = 600; 			//for Witham dataset: images were taken every 10 minutes 
+//int timeQuantum = 7200; 		//for stromovka dataset: pretend that one year equals to one day, i.e. one month is 2 hours
+int timeQuantum = 600; 			//for Witham dataset: images were taken every 10 minutes 
 int featuresToExtract = 500;
 float confVec[8];
 

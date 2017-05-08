@@ -5,13 +5,13 @@ function extend_figure
 	w=$(identify $1 |cut -f 3 -d ' '|cut -f 1 -d x)
 	h=$(identify $1 |cut -f 3 -d ' '|cut -f 2 -d x)
 	if [ $w -lt 500 ]; then	convert $1 -bordercolor white -border $(((500-$w)/2))x0 $1;fi
-	if [ $h -lt 500 ]; then	convert $1 -bordercolor white -border 0x$(((500-$h)/2)) $1;fi
-	convert $1 -resize 500x500 $1
+	if [ $h -lt 400 ]; then	convert $1 -bordercolor white -border 0x$(((400-$h)/2)) $1;fi
+	convert $1 -resize 500x400 $1
 	w=$(identify $1 |cut -f 3 -d ' '|cut -f 1 -d x)
 	h=$(identify $1 |cut -f 3 -d ' '|cut -f 2 -d x)
 	if [ $w -lt 500 ]; then	convert $1 -bordercolor white -border $(((500-$w)/2))x0 $1;fi
-	if [ $h -lt 500 ]; then	convert $1 -bordercolor white -border 0x$(((500-$h)/2)) $1;fi
-	convert $1 -resize 500x500 $1
+	if [ $h -lt 400 ]; then	convert $1 -bordercolor white -border 0x$(((400-$h)/2)) $1;fi
+	convert $1 -resize 500x400 $1
 }
 
 function create_graph
@@ -39,6 +39,7 @@ function create_graph
 REPORTS=../data/$d/reports
 rm best.txt
 grep -v '#' ../src/models/test_models.txt >models.tmp
+cat ../src/models/test_models.txt |tr -d '#' >models.tmp
 for model in $(cut -f 1 -d ' ' models.tmp)
 do
 	errmin=100
@@ -76,12 +77,12 @@ gnuplot draw_summary.gnu >graphs.fig
 fig2dev -Lpdf graphs.fig graphs.pdf
 convert -density 200 graphs.pdf graphs.png
 extend_figure graphs.png 
-convert -size 1100x600 xc:white \
-	-draw 'Image src-over 25,100 500,500 'graphs.png'' \
-	-draw 'Image src-over 575,100 500,500 '$d.png'' \
-	-pointsize 32 \
-	-draw 'Text 100,40 "Performance of temporal models for door state prediction"' \
-	-pointsize 18 \
+convert -size 900x450 xc:white \
+	-draw 'Image src-over 25,50 500,400 'graphs.png'' \
+	-draw 'Image src-over 525,90 375,300 '$d.png'' \
+	-pointsize 24 \
+	-draw 'Text 20,30 "Performance of temporal models for localisation in changing indoor environments"' \
+	-pointsize 16 \
 	-gravity North \
-	-draw 'Text 0,60 "Arrow A->B means that A performs statistically significantly better that B"' summary.png;
+	-draw 'Text 0,40 "Arrow A->B means that A performs statistically significantly better that B"' summary.png;
 cp summary.png  ../data/$d/results/summary.png
