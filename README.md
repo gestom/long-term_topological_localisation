@@ -11,7 +11,7 @@ The long-term observations of a particular image feature visibility (red,centre)
 Transferring the most prominent spectral components (left, green) to the time domain provides an analytic expression (centre) representing the probability of the feature being visible at a given time (green, centre).
 This allows to predict the feature visibility at a time when the robot performs self-localization (blue). In this case, the FreMEn model is applied to all features visible at a given location, which allows to predict its appearance for a specific time. 
 
-[![FreMEn for Visual Localization](https://raw.githubusercontent.com/wiki/gestom/fremen/pics/features.png)](https://www.youtube.com/watch?v=aTr9KD4XMGc"FreMEn for Visual Localization")
+[![FreMEn for Visual Localization](https://raw.githubusercontent.com/wiki/gestom/fremen/pics/features.png)](http://www.youtube.com/watch?v=aTr9KD4XMGc)
 <b>Click the picture to see a detailed explanation - make sure you have sound on.</b>
 
 ### Automated benchmark
@@ -85,6 +85,7 @@ Finally, you can call the script
 and the <i>stromovka/summary</i> folder will contain the results of the localization for different FreMEn orders in text format and as a graph in <i>xfig</i>, <i>png</i> and <i>pdf</i>.
 The graph <i>stromovka/summary/error.pdf</i> should look like the Figure 3 of [[2](#references)].
 
-###References
+### References
+
 1. T.Krajnik, J.P.Fentanes, O.M.Mozos, T.Duckett, J.Ekekrantz, M.Hanheide: <b>[Long-term topological localisation for service robots in dynamic environments using spectral maps.](http://raw.githubusercontent.com/wiki/gestom/fremen/papers/fremen_2014_IROS.pdf)</b> In proceedings of the IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS), 2014. [[bibtex](http://raw.githubusercontent.com/wiki/gestom/fremen/papers/fremen_2014_IROS.bib)]
 2. T.Krajnik, J.P.Fentanes, J.Santos, K.Kusumam, T.Duckett: <b>[FreMEn: Frequency Map Enhancement for Long-Term Mobile Robot Autonomy in Changing Environments.](http://raw.githubusercontent.com/wiki/gestom/fremen/papers/fremen_2015_ICRA_VPRCE.pdf)</b> In proceedings of the ICRA Workshop on Visual Place Recognition in Changing Environments (VPRiCE), 2014. [[bibtex](http://raw.githubusercontent.com/wiki/gestom/fremen/papers/fremen_2015_ICRA_VPRCE.bib)]
