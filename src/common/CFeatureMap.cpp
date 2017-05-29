@@ -165,7 +165,7 @@ int CFeatureMap::extract(Mat img,int number)
 	//StarFeatureDetector detector(45,0,10,8,5);
 	//BriefDescriptorExtractor extractor;
 	SIFT detector(200,3,0,10,1.6);
-	SIFR extractor;
+	SIFT extractor;
 
 	imagePositions.clear();
 	detector.detect(img,  imagePositions);
