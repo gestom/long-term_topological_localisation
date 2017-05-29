@@ -8,6 +8,7 @@
 #include "CFrelement.h" 
 #include "CFeatureMap.h" 
 
+
 unsigned int times[10000];
 unsigned int realTimes[10000];
 unsigned int averages[10000];
