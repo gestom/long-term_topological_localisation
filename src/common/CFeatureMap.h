@@ -11,10 +11,13 @@
 #include <opencv2/nonfree/features2d.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include "CFrelement.h" 
+#include "CTomasuvPokus.h" 
 
 using namespace std;
 using namespace cv;
 
+#define ELEMENT CTomasuvPokus
+//#define ELEMENT CFrelement
 //matching restrictions
 #define VERTICAL_LIMIT 50
 #define HORIZONTAL_LIMIT 400
@@ -63,7 +66,7 @@ class CFeatureMap
 		Mat imageDescriptors;
 		vector<DMatch> matches;
 
-		CFrelement** frelementArray;
+		ELEMENT** frelementArray;
 		int numFeatures;
 		int numPics;	
 		int totalPics;
