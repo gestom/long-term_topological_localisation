@@ -14,6 +14,10 @@ This allows to predict the feature visibility at a time when the robot performs 
 [![FreMEn for Visual Localization](https://raw.githubusercontent.com/wiki/gestom/fremen/pics/features.png)](https://www.youtube.com/watch?v=aTr9KD4XMGc"FreMEn for Visual Localization")
 <b>Click the picture to see a detailed explanation - make sure you have sound on.</b>
 
+### Automated benchmark
+
+This repository allows for automated benchmarking using the approach described in [[3](#references)]. If you would like to quickly test any improvements of our method, for the repository, do your changes in the code and open a pull request. A Jenkins server will automatically compile your code, compare it against the method presented in [[1,2](#references)] and send you a detailed report.
+
 
 ### How to use the software
 
