@@ -18,8 +18,7 @@ using namespace cv;
 //matching restrictions
 #define VERTICAL_LIMIT 50
 #define HORIZONTAL_LIMIT 400
-#define L2_NORM false 
-
+#define L2_NORM true 
 class CFeatureMap
 {
 	public:

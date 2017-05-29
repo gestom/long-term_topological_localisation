@@ -1,5 +1,5 @@
 d='stromovka'
-order=0
+order=1
 
 function extend_figure
 {
