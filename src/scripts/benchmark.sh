@@ -53,7 +53,7 @@ if [ ! -e $SUMMARY ]; then mkdir $SUMMARY;fi
 
 ./scripts/buildmaps.sh stromovka
 
-for numFeatures in $(seq -w 1 1 50); 
+for numFeatures in $(seq -w 1 10 50); 
 do
 echo $EXE test $IMAGES $MAPS $numFeatures $order 
 $EXE test $IMAGES $MAPS $numFeatures $order >$REPORTS/$numFeatures-new.txt 2>/dev/null
