@@ -219,12 +219,12 @@ void CFeatureMap::fremenize(int order)
 	unsigned char *signal = (unsigned char*)calloc(visibility.cols,sizeof(unsigned char));
 	unsigned int *timeArray = (unsigned int*)calloc(visibility.cols,sizeof(unsigned int));
 
-	frelementArray = (CFrelement**) calloc(visibility.rows,sizeof(CFrelement*));
+	frelementArray = (ELEMENT**) calloc(visibility.rows,sizeof(ELEMENT*));
 	for (int j=0;j<visibility.cols;j++) timeArray[j] = times.at<uint32_t>(0,j);
 	for (int i=0;i<visibility.rows;i++)
 	{
 		for (int j=0;j<visibility.cols;j++) signal[j] = visibility.at<char>(i,j);
-		frelementArray[i] = new CFrelement();
+		frelementArray[i] = new ELEMENT();
 		frelementArray[i]->build(timeArray,signal,totalPics,order);
 		if (debug) frelementArray[i]->print();
 	}
@@ -408,11 +408,11 @@ bool CFeatureMap::load(const char* name)
 	if (debug) printf("Loaded %ld features from %i images.\n",globalPositions.size(),visibility.cols);
 	int line = 0;
 	if (fremen.empty() == false){
-		frelementArray = (CFrelement**) calloc(visibility.rows,sizeof(CFrelement*));
+		frelementArray = (ELEMENT**) calloc(visibility.rows,sizeof(ELEMENT*));
 		for (int i = 0;i< globalDescriptors.rows;i++)
 		{
 			if ((fremen.at<float>(line,0) != 0) || (fremen.at<float>(line,1) != 0) || (fremen.at<float>(line,2) != i)) printf("Error when loading FreMEn feature visibility.\n"); 
-			frelementArray[i] = new CFrelement(fremen.at<float>(line,3),fremen.at<float>(line,4),visibility.cols);
+			frelementArray[i] = new ELEMENT(fremen.at<float>(line,3),fremen.at<float>(line,4),visibility.cols);
 			line++;
 			for (int j = 0;j< frelementArray[i]->order;j++){
 				if ((fremen.at<float>(line,0) != i) || (fremen.at<float>(line,1) != j)) printf("Error when loading FreMEn feature visibility.\n"); 
